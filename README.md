@@ -17,9 +17,15 @@
 | **Attention RNN** | — | — | **87.8%** |
 | **Attention LSTM** | — | — | **87.4%** |
 
-
 <p align="center">
   <img src="images/b5_rnn_vs_lstm_test_accuracy.png" alt="Test Accuracy Comparison" width="100%">
+</p>
+
+---
+
+## Sample Model Output
+<p align="center">
+  <img src="images/model_output.png" alt="Test Accuracy Comparison" width="100%">
 </p>
 
 ---
