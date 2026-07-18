@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMDB Sentiment Analysis — RNNs, LSTMs & Attention</title>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --surface: #111921;
+    --surface2: #151d27;
+    --border: #1e2d3d;
+    --text: #e6edf3;
+    --text-muted: #7b8da0;
+    --accent: #39d353;
+    --accent2: #f0883e;
+    --blue: #58a6ff;
+    --red: #f85149;
+    --purple: #bc8cff;
+    --teal: #56d4dd;
+    --radius: 14px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  .hero {
+    min-height: 380px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 24px;
+    background: linear-gradient(180deg, #0d1520 0%, #0a0e14 100%);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(57,211,83,0.07) 0%, transparent 70%);
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(240,136,62,0.05) 0%, transparent 70%);
+    bottom: -150px;
+    right: 10%;
+  }
+
+  .hero h1 {
+    font-size: 3.2rem;
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .hero h1 .gradient {
+    background: linear-gradient(90deg, var(--accent), var(--teal), var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero .subtitle {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    max-width: 580px;
+    position: relative;
+  }
+
+  .pills {
+    display: flex;
+    gap: 10px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+  }
+  .pill {
+    padding: 8px 18px;
+    border-radius: 24px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pill .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .dot.green { background: var(--accent); }
+  .dot.orange { background: var(--accent2); }
+  .dot.blue { background: var(--blue); }
+
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  section { padding: 56px 0; }
+
+  h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  h2 .icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .icon.green { background: #39d35318; color: var(--accent); }
+  .icon.orange { background: #f0883e18; color: var(--accent2); }
+  .icon.blue { background: #58a6ff18; color: var(--blue); }
+  .icon.purple { background: #bc8cff18; color: var(--purple); }
+  .icon.teal { background: #56d4dd18; color: var(--teal); }
+
+  .section-desc {
+    color: var(--text-muted);
+    margin-bottom: 28px;
+    font-size: 0.92rem;
+  }
+
+  h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 24px 0 10px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin: 20px 0;
+  }
+
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+  }
+  .metric .val {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .metric .lbl {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+  .val.green { color: var(--accent); }
+  .val.orange { color: var(--accent2); }
+  .val.blue { color: var(--blue); }
+  .val.purple { color: var(--purple); }
+  .val.teal { color: var(--teal); }
+  .val.red { color: var(--red); }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin: 16px 0;
+    font-size: 0.92rem;
+  }
+  th, td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--surface2);
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+  }
+  tr:last-child td { border-bottom: none; }
+  td.best { color: var(--accent); font-weight: 700; }
+  td.mid { color: var(--accent2); font-weight: 600; }
+  td.worst { color: var(--text-muted); }
+
+  .img-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin: 20px 0;
+  }
+  .img-wrap img {
+    width: 100%;
+    display: block;
+  }
+  .img-wrap .cap {
+    padding: 10px 16px;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .callout {
+    padding: 16px 20px;
+    border-radius: var(--radius);
+    margin: 16px 0;
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+  .callout.green {
+    background: #39d35310;
+    border: 1px solid #39d35330;
+  }
+  .callout.orange {
+    background: #f0883e10;
+    border: 1px solid #f0883e30;
+  }
+  .callout.blue {
+    background: #58a6ff10;
+    border: 1px solid #58a6ff30;
+  }
+
+  .pipeline {
+    display: flex;
+    gap: 0;
+    margin: 20px 0;
+    overflow-x: auto;
+  }
+  .pipe-step {
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+    padding: 14px 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    position: relative;
+    font-size: 0.82rem;
+  }
+  .pipe-step:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+  .pipe-step:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+  .pipe-step .step-num {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .pipe-step .step-name {
+    font-weight: 600;
+    color: var(--teal);
+    font-size: 0.85rem;
+  }
+  .pipe-step + .pipe-step { border-left: none; }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 48px 0;
+  }
+
+  code {
+    background: var(--surface2);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    color: var(--teal);
+  }
+
+  ul { padding-left: 20px; margin: 8px 0; }
+  li { margin: 3px 0; color: var(--text-muted); font-size: 0.92rem; }
+
+  .model-tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .model-tag.rnn { background: #58a6ff22; color: var(--blue); }
+  .model-tag.lstm { background: #39d35322; color: var(--accent); }
+  .model-tag.attn { background: #f0883e22; color: var(--accent2); }
+
+  footer {
+    text-align: center;
+    padding: 40px 24px;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    border-top: 1px solid var(--border);
+  }
+  footer a { color: var(--blue); text-decoration: none; }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 2rem; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .pipeline { flex-direction: column; }
+    .pipe-step:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+    .pipe-step:last-child { border-radius: 0 0 var(--radius) var(--radius); }
+    .pipe-step + .pipe-step { border-left: 1px solid var(--border); border-top: none; }
+  }
+</style>
+</head>
+<body>
+
+<div style="position: fixed; bottom: 20px; right: 20px; background: #ffffff; border: 1px solid #e1e4e8; border-radius: 8px; padding: 12px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 13px; z-index: 1000; max-width: 280px; line-height: 1.4;">
+  <div style="color: #586069; margin-bottom: 2px;">Connect with</div>
+  <div style="font-weight: bold; color: #24292e; margin-bottom: 5px;">Kushal Ghosh</div>
+  <div style="display: flex; gap: 8px; font-weight: 500;">
+      <a href="mailto:gkushalg01@gmail.com" style="color: #0366d6; text-decoration: none;">Email</a> • 
+      <a href="https://github.com/gkushalg01" target="_blank" style="color: #0366d6; text-decoration: none;">GitHub</a> • 
+      <a href="https://linkedin.com/in/kushal-ghosh" target="_blank" style="color: #0366d6; text-decoration: none;">LinkedIn</a>
+  </div>
+</div>
+
+<div class="hero">
+  <h1><span class="gradient">IMDB Sentiment Analysis</span></h1>
+  <p class="subtitle">Comparing RNNs, LSTMs, and Attention mechanisms with pretrained embeddings for binary sentiment classification</p>
+  <div class="pills">
+    <div class="pill"><span class="dot green"></span> 87.77% Best Accuracy</div>
+    <div class="pill"><span class="dot orange"></span> 50K Movie Reviews</div>
+    <div class="pill"><span class="dot blue"></span> RNN · LSTM · Attention · GloVe</div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- Overview -->
+<section>
+  <h2><span class="icon green">📊</span> Results at a Glance</h2>
+  <p class="section-desc">Test accuracy across all model and embedding combinations</p>
+
+  <div class="grid-4">
+    <div class="metric">
+      <div class="val" style="color:var(--text-muted)">50.20%</div>
+      <div class="lbl">RNN + Random</div>
+    </div>
+    <div class="metric">
+      <div class="val" style="color:var(--text-muted)">52.87%</div>
+      <div class="lbl">RNN + Word2Vec</div>
+    </div>
+    <div class="metric">
+      <div class="val" style="color:var(--text-muted)">62.51%</div>
+      <div class="lbl">RNN + GloVe</div>
+    </div>
+    <div class="metric">
+      <div class="val" style="color:var(--text-muted)">76.14%</div>
+      <div class="lbl">LSTM + Random</div>
+    </div>
+    <div class="metric">
+      <div class="val blue">82.13%</div>
+      <div class="lbl">LSTM + Word2Vec</div>
+    </div>
+    <div class="metric">
+      <div class="val red">86.16%</div>
+      <div class="lbl">LSTM + GloVe</div>
+    </div>
+    <div class="metric">
+      <div class="val green">87.77%</div>
+      <div class="lbl">Attn RNN + GloVe ⭐</div>
+    </div>
+    <div class="metric">
+      <div class="val orange">87.36%</div>
+      <div class="lbl">Attn LSTM + GloVe </div>
+    </div>
+  </div>
+
+  <div class="img-wrap">
+    <img src="images/b5_rnn_vs_lstm_test_accuracy.png" alt="RNN vs LSTM Comparison">
+    <div class="cap">Test accuracy comparison across all six model-embedding combinations. LSTMs dramatically outperform vanilla RNNs regardless of embedding type.</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Preprocessing -->
+<section>
+  <h2><span class="icon teal">🔧</span> Text Preprocessing</h2>
+  <p class="section-desc">From raw HTML reviews to clean tokenized sequences</p>
+
+  <div class="pipeline">
+    <div class="pipe-step"><div class="step-num">1</div><div class="step-name">HTML Strip</div></div>
+    <div class="pipe-step"><div class="step-num">2</div><div class="step-name">Lowercase</div></div>
+    <div class="pipe-step"><div class="step-num">3</div><div class="step-name">Clean Text</div></div>
+    <div class="pipe-step"><div class="step-num">4</div><div class="step-name">Tokenize</div></div>
+    <div class="pipe-step"><div class="step-num">5</div><div class="step-name">Lemmatize</div></div>
+    <div class="pipe-step"><div class="step-num">6</div><div class="step-name">Pad/Truncate</div></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Dataset Split</h3>
+      <ul>
+        <li><strong style="color:var(--text)">Training:</strong> 20,000 reviews</li>
+        <li><strong style="color:var(--text)">Validation:</strong> 5,000 reviews</li>
+        <li><strong style="color:var(--text)">Test:</strong> 25,000 reviews</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Vocabulary</h3>
+      <ul>
+        <li>Top 20,000 tokens + <code>&lt;pad&gt;</code>, <code>&lt;unk&gt;</code></li>
+        <li>Max sequence length: 256</li>
+        <li>NLTK WordNetLemmatizer</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="img-wrap">
+    <img src="images/b1_review_length_distribution.png" alt="Review Length Distribution">
+    <div class="cap">Distribution of review lengths after preprocessing. The red dashed line shows the chosen MAX_SEQ_LEN=256, which covers the majority of reviews while keeping computation manageable.</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Embeddings -->
+<section>
+  <h2><span class="icon blue">💎</span> Embedding Strategies</h2>
+  <p class="section-desc">Three approaches to word representation — from random to pretrained</p>
+
+  <div class="grid-3">
+    <div class="card">
+      <h3 style="color:var(--text-muted)">Random Init</h3>
+      <p style="font-size:0.85rem;color:var(--text-muted)">Xavier uniform initialization. Embeddings learned entirely from scratch during training. 100-d vectors.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--accent2)">Word2Vec</h3>
+      <p style="font-size:0.85rem;color:var(--text-muted)">Skip-gram trained on the IMDB corpus itself. Captures domain-specific semantics (window=5, 15 epochs). 100-d vectors.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--accent)">GloVe 6B</h3>
+      <p style="font-size:0.85rem;color:var(--text-muted)">Pretrained on 6 billion tokens from web corpora. Rich semantic relationships with broad vocabulary coverage. 100-d vectors.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Vanilla RNN -->
+<section>
+  <h2><span class="icon blue">🔄</span> Vanilla RNN</h2>
+  <p class="section-desc">Baseline recurrent model — simple but limited by vanishing gradients</p>
+
+  <div class="card">
+    <h3>Architecture</h3>
+    <ul>
+      <li>2-layer RNN, hidden dimension 128</li>
+      <li>Dropout: 0.3 (between layers and before FC)</li>
+      <li>Output: Linear(128→1) + BCEWithLogitsLoss</li>
+      <li>Gradient clipping: max_norm=5.0</li>
+      <li>Adam (lr=1e-3), ReduceLROnPlateau, 10 epochs</li>
+    </ul>
+  </div>
+
+  <table>
+    <tr><th>Embedding</th><th>Test Loss</th><th>Test Accuracy</th></tr>
+    <tr><td><span class="model-tag rnn">RNN</span>Random</td><td>0.6938</td><td class="worst">50.20%</td></tr>
+    <tr><td><span class="model-tag rnn">RNN</span>Word2Vec</td><td>0.6913</td><td>52.87%</td></tr>
+    <tr><td><span class="model-tag rnn">RNN</span>GloVe</td><td>0.6618</td><td class="best">62.51%</td></tr>
+  </table>
+
+  <div class="callout orange">
+    <strong>Vanishing Gradient Problem:</strong> With sequence length 256, gradients are multiplied through 256 recurrence steps. When the spectral radius of the Jacobian is &lt;1, gradients vanish exponentially — the RNN struggles to connect early sentiment cues to the final classification.
+  </div>
+
+  <div class="grid-3">
+    <div class="img-wrap">
+      <img src="images/b3_vanilla_rnn_loss_vs_accuracy_random.png" alt="RNN Random">
+      <div class="cap">RNN + Random embeddings</div>
+    </div>
+    <div class="img-wrap">
+      <img src="images/b4_vanilla_rnn_loss_vs_accuracy_word2vec.png" alt="RNN Word2Vec">
+      <div class="cap">RNN + Word2Vec</div>
+    </div>
+    <div class="img-wrap">
+      <img src="images/b4_vanilla_rnn_loss_vs_accuracy_glove.png" alt="RNN GloVe">
+      <div class="cap">RNN + GloVe</div>
+    </div>
+  </div>
+
+  <div class="img-wrap">
+    <img src="images/b4_rnn_embedding_comparison.png" alt="RNN Embedding Comparison">
+    <div class="cap">Validation loss and accuracy comparison across embedding types. Word2Vec and GloVe provide faster initial improvement, but all variants plateau near random chance.</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- LSTM -->
+<section>
+  <h2><span class="icon green">🧠</span> LSTM</h2>
+  <p class="section-desc">Gated architecture that solves the vanishing gradient problem</p>
+
+  <div class="card">
+    <h3>Why LSTM?</h3>
+    <p style="font-size:0.9rem;color:var(--text-muted)">The LSTM introduces three gates (forget, input, output) and a cell state that acts as a gradient highway. This allows the model to selectively retain and forget information across long sequences — critical for understanding sentiment in reviews that can span hundreds of words.</p>
+  </div>
+
+  <table>
+    <tr><th>Embedding</th><th>Test Loss</th><th>Test Accuracy</th></tr>
+    <tr><td><span class="model-tag lstm">LSTM</span>Random</td><td>0.5532</td><td>76.14%</td></tr>
+    <tr><td><span class="model-tag lstm">LSTM</span>Word2Vec</td><td>0.3972</td><td>82.13%</td></tr>
+    <tr><td><span class="model-tag lstm">LSTM</span>GloVe</td><td>0.3551</td><td class="best">86.16%</td></tr>
+  </table>
+
+  <div class="grid-3">
+    <div class="img-wrap">
+      <img src="images/b5_lstm_loss_vs_accuracy_random.png" alt="LSTM GloVe">
+      <div class="cap">LSTM + Random </div>
+    </div>
+    <div class="img-wrap">
+      <img src="images/b5_lstm_loss_vs_accuracy_word2vec.png" alt="LSTM Word2Vec">
+      <div class="cap">LSTM + Word2Vec training dynamics</div>
+    </div>
+    <div class="img-wrap">
+      <img src="images/b5_lstm_loss_vs_accuracy_glove.png" alt="LSTM GloVe">
+      <div class="cap">LSTM + GloVe training dynamics</div>
+    </div>
+  </div>
+
+  <div class="img-wrap">
+    <img src="images/b5_convergence_comparison.png" alt="Convergence Comparison">
+    <div class="cap">Convergence comparison: LSTM+GloVe achieves ~86% validation accuracy while vanilla RNN variants stagnate near 50%. The cell state highway enables dramatically faster and more effective learning.</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Attention -->
+<section>
+  <h2><span class="icon orange">🎯</span> Attention Mechanism</h2>
+  <p class="section-desc">Learning to focus on sentiment-bearing words regardless of position</p>
+
+  <div class="card">
+    <h3>How It Works</h3>
+    <p style="font-size:0.9rem;color:var(--text-muted)">Instead of relying on the last hidden state (information bottleneck), attention computes a weighted sum over <em>all</em> hidden states. A single linear projection scores each timestep, padding tokens are masked, and the context vector replaces the last hidden state for classification.</p>
+    <p style="font-size:0.85rem;color:var(--text-muted);margin-top:8px"><strong>Parameter overhead:</strong> Only 129 additional parameters (h+1 for h=128) — negligible.</p>
+  </div>
+
+  <table>
+    <tr><th>Architecture</th><th>Test Loss</th><th>Test Accuracy</th></tr>
+    <tr><td><span class="model-tag rnn">RNN</span>GloVe (baseline)</td><td>0.6331</td><td class="worst">62.51%</td></tr>
+    <tr><td><span class="model-tag lstm">LSTM</span>GloVe</td><td>0.3831</td><td>86.16%</td></tr>
+    <tr><td><span class="model-tag attn">ATTN</span>RNN + GloVe</td><td>0.3113</td><td class="best">87.77%</td></tr>
+    <tr><td><span class="model-tag attn">ATTN</span>LSTM + GloVe</td><td>0.3145</td><td>87.36%</td></tr>
+  </table>
+
+  <div class="callout green">
+    <strong>Key Result:</strong> Attention RNN + GloVe achieves <strong>87.77%</strong> test accuracy — surpassing even the LSTM without attention (86.6%). Attention compensates for the RNN's vanishing gradient limitation by providing direct access to all timesteps.
+  </div>
+
+  <div class="grid-2">
+    <div class="img-wrap">
+      <img src="images/b6_attention_rnn_glove_loss_vs_accuracy.png" alt="Attention RNN">
+      <div class="cap">Attention RNN + GloVe</div>
+    </div>
+    <div class="img-wrap">
+      <img src="images/b6_attention_lstm_glove_loss_vs_accuracy.png" alt="Attention LSTM">
+      <div class="cap">Attention LSTM + GloVe</div>
+    </div>
+  </div>
+
+  <div class="img-wrap">
+    <img src="images/b6_attention_weights.png" alt="Attention Weights">
+    <div class="cap">Top attention weights for a sample review. The model focuses on sentiment-bearing words like "well", "great", and "emotion" — providing interpretability into the classification decision.</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Final Comparison -->
+<section>
+  <h2><span class="icon purple">⚡</span> Architecture Comparison</h2>
+  <p class="section-desc">All architectures with GloVe embeddings — the full picture</p>
+
+  <div class="grid-4">
+    <div class="metric">
+      <div class="val" style="color:var(--text-muted)">62.51%</div>
+      <div class="lbl">Vanilla RNN</div>
+    </div>
+    <div class="metric">
+      <div class="val blue">86.16%</div>
+      <div class="lbl">LSTM</div>
+    </div>
+    <div class="metric">
+      <div class="val green">87.77%</div>
+      <div class="lbl">Attention RNN ⭐</div>
+    </div>
+    <div class="metric">
+      <div class="val orange">87.36%</div>
+      <div class="lbl">Attention LSTM</div>
+    </div>
+  </div>
+
+  <div class="grid-1">
+    <div class="img-wrap">
+      <img src="images/b6_architecture_comparison.png" alt="Architecture Comparison">
+      <div class="cap">Validation loss and accuracy across all four architectures with GloVe embeddings</div>
+      <div class="cap">Final test accuracy comparison — attention models achieve ~88% while vanilla RNN stagnates at ~52%</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Key Findings -->
+<section>
+  <h2><span class="icon green">✅</span> Key Findings</h2>
+
+  <div class="card" style="border-left: 3px solid var(--accent);">
+    <ul>
+      <li><strong style="color:var(--text)">Embeddings matter:</strong> GloVe provides the best initialization — trained on 6B tokens, captures rich semantic relationships</li>
+      <li><strong style="color:var(--text)">LSTM >> RNN:</strong> LSTM outperforms vanilla RNN by 20-34% across all embeddings due to gated gradient flow</li>
+      <li><strong style="color:var(--text)">Attention is powerful:</strong> Simple additive attention (129 extra params) boosts RNN from 62.51% to 87.77%</li>
+      <li><strong style="color:var(--text)">Attention RNN ≈ LSTM:</strong> With attention, even a vanilla RNN matches or exceeds LSTM performance</li>
+      <li><strong style="color:var(--text)">Vanishing gradients are real:</strong> Vanilla RNNs are near-random on sequences of length 256 — a clear practical demonstration</li>
+    </ul>
+  </div>
+</section>
+
+</div>
+
+<footer>
+  Built with PyTorch · IMDB Dataset · GloVe Embeddings · <a href="https://ai.stanford.edu/~amaas/data/sentiment/">Dataset Source</a>
+</footer>
+
+</body>
+</html>
