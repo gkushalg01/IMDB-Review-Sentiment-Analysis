@@ -679,18 +679,61 @@
 </footer>
 
 
-
-<div style="position: fixed; bottom: 20px; right: 20px; background: #ffffff; border: 1px solid #e1e4e8; border-radius: 8px; padding: 12px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 13px; z-index: 1000; max-width: 280px; line-height: 1.4;">
-  <div style="color: #586069; margin-bottom: 2px;">Connect with</div>
-  <div style="font-weight: bold; color: #24292e; margin-bottom: 5px;">Kushal Ghosh</div>
-  <div style="display: flex; gap: 8px; font-weight: 500;">
-      <a href="mailto:gkushalg01@gmail.com" style="color: #0366d6; text-decoration: none;">Email</a> • 
-      <a href="https://github.com/gkushalg01" target="_blank" style="color: #0366d6; text-decoration: none;">GitHub</a> • 
-      <a href="https://linkedin.com/in/kushal-ghosh" target="_blank" style="color: #0366d6; text-decoration: none;">LinkedIn</a>
-  </div>
-</div>
-
-
+<!-- Floating contact card — paste anywhere (head or body). Self-contained & isolated. -->
+<script>
+(function () {
+  function mount() {
+    if (document.getElementById('kg-contact-card')) return;      // avoid duplicates
+    var host = document.createElement('div');
+    host.id = 'kg-contact-card';
+    document.body.appendChild(host);
+    var root = host.attachShadow({ mode: 'open' });
+    root.innerHTML =
+      '<style>' +
+      ':host{all:initial;}' +
+      '.kg{position:fixed;bottom:20px;right:20px;z-index:2147483647;display:flex;gap:12px;align-items:center;' +
+        'padding:12px 16px 12px 12px;border-radius:14px;' +
+        'background:linear-gradient(145deg,rgba(27,35,51,.96),rgba(22,28,44,.96));' +
+        'border:1px solid rgba(124,92,255,.35);' +
+        'box-shadow:0 12px 34px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.03);' +
+        '-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);' +
+        'font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;box-sizing:border-box;' +
+        'transition:transform .18s ease,box-shadow .18s ease;}' +
+      '.kg:hover{transform:translateY(-3px);box-shadow:0 18px 44px rgba(34,211,238,.18),0 12px 30px rgba(0,0,0,.5);}' +
+      '.kg__avatar{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;' +
+        'font-weight:800;font-size:15px;letter-spacing:.5px;color:#fff;' +
+        'background:linear-gradient(135deg,#7c5cff,#ff7ac6);box-shadow:0 6px 18px rgba(124,92,255,.4);}' +
+      '.kg__body{display:flex;flex-direction:column;gap:2px;line-height:1.25;}' +
+      '.kg__label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#9aa7bd;}' +
+      '.kg__name{font-size:14px;font-weight:700;color:#e6ebf5;margin-bottom:5px;}' +
+      '.kg__links{display:flex;gap:8px;}' +
+      '.kg__links a{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:#b4c2d6;' +
+        'background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);transition:.15s;text-decoration:none;}' +
+      '.kg__links a:hover{color:#fff;background:rgba(124,92,255,.28);border-color:rgba(124,92,255,.6);transform:translateY(-2px);}' +
+      '.kg__links svg{width:15px;height:15px;}' +
+      '@media print{.kg{display:none;}}' +
+      '@media(max-width:640px){.kg{bottom:12px;right:12px;padding:10px;}}' +
+      '</style>' +
+      '<div class="kg" role="complementary" aria-label="Contact Kushal Ghosh">' +
+        '<div class="kg__avatar">KG</div>' +
+        '<div class="kg__body">' +
+          '<span class="kg__label">Connect with</span>' +
+          '<span class="kg__name">Kushal Ghosh</span>' +
+          '<div class="kg__links">' +
+            '<a href="mailto:gkushalg01@gmail.com" title="Email" aria-label="Email"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm-.4 4.25-7.07 4.42a1 1 0 0 1-1.06 0L4.4 8.25a.75.75 0 1 1 .8-1.27L12 11.2l6.8-4.22a.75.75 0 1 1 .8 1.27Z"/></svg></a>' +
+            '<a href="https://github.com/gkushalg01" target="_blank" rel="noopener noreferrer" title="GitHub" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-1.8c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17 4.9 18 5.2 18 5.2c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5Z"/></svg></a>' +
+            '<a href="https://linkedin.com/in/kushal-ghosh" target="_blank" rel="noopener noreferrer" title="LinkedIn" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29ZM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14ZM7.12 20.45H3.55V9h3.57v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.53C0 23.22.79 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.74V1.73C24 .77 23.2 0 22.22 0Z"/></svg></a>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mount);
+  } else {
+    mount();
+  }
+})();
+</script>
   
 </body>
 </html>
