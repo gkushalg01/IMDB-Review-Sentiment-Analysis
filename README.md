@@ -5,6 +5,9 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://python.org)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Report](https://img.shields.io/badge/Live%20Report-View-brightgreen?logo=github)](https://gkushalg01.github.io/IMDB-Review-Sentiment-Analysis/)
+
+**[View the report ->](https://gkushalg01.github.io/IMDB-Review-Sentiment-Analysis/)**
 
 ---
 
